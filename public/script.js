@@ -1,180 +1,201 @@
-// fetch catalog from server and render; handle placing orders and user order cancellation
+// script.js
+document.addEventListener('DOMContentLoaded', async () => {
+  // DOM elements
+  const catalogContainer = document.getElementById('items');
+  const dressSelect = document.getElementById('dressSelect');
+  const orderForm = document.getElementById('orderForm');
+  const messageEl = document.getElementById('message');
+  const viewOrdersBtn = document.getElementById('viewOrdersBtn');
+  const ordersList = document.getElementById('ordersList');
+  const ordersSection = document.getElementById('ordersListSection');
+  const closeOrdersBtn = document.getElementById('closeOrders');
 
-async function apiFetch(url, opts = {}) {
-  const res = await fetch(url, opts);
-  if (!res.ok) {
-    const err = await res.json().catch(()=>({ error: 'Network error' }));
-    throw new Error(err.error || res.statusText || 'Request failed');
-  }
-  return res.json();
-}
+  // Optional user login info
+  const userEmail = localStorage.getItem('userEmail') || '';
+  const isAdmin = localStorage.getItem('isAdmin') === 'true';
+  const adminToken = isAdmin ? localStorage.getItem('adminToken') : null;
 
-function $(sel) { return document.querySelector(sel); }
-
-let catalog = [];
-
-async function loadCatalog() {
-  try {
-    catalog = await apiFetch('/api/catalog');
-    renderCatalog();
-    populateSelect();
-  } catch (err) {
-    console.error('Catalog load error', err);
-    $('#items').innerHTML = '<div class="card">Failed to load catalog</div>';
-  }
-}
-
-function renderCatalog() {
-  const container = $('#items');
-  container.innerHTML = '';
-  catalog.forEach(item => {
-    const el = document.createElement('div');
-    el.className = 'product card';
-    el.innerHTML = `
-      <img src="${item.img}" alt="${item.title}" />
-      <div class="title">${item.title}</div>
-      <div class="meta">${item.desc || ''}</div>
-      <div class="price">₹ ${Number(item.price).toLocaleString()}</div>
-      <div class="actions">
-        <button data-id="${item.id}" class="selectBtn">Select</button>
-      </div>
-    `;
-    container.appendChild(el);
-  });
-}
-
-function populateSelect() {
-  const sel = $('#dressSelect');
-  sel.innerHTML = '';
-  catalog.forEach(it => {
-    const o = document.createElement('option');
-    o.value = it.id;
-    o.textContent = `${it.title} — ₹ ${it.price}`;
-    sel.appendChild(o);
-  });
-}
-
-// prefill email if user visited from login
-function prefillEmail() {
-  const stored = localStorage.getItem('userEmail');
-  if (stored) {
-    $('#orderEmail').value = stored;
-    $('#welcomeInfo').textContent = `Hello, ${stored}`;
-    $('#loginBtn').textContent = 'Change Email';
-  } else {
-    $('#welcomeInfo').textContent = '';
-    $('#loginBtn').textContent = 'Login';
-  }
-}
-
-// select button behavior
-document.addEventListener('click', (e) => {
-  const btn = e.target.closest('.selectBtn');
-  if (!btn) return;
-  const id = btn.dataset.id;
-  $('#dressSelect').value = id;
-  window.scrollTo({ top: 300, behavior: 'smooth' });
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-  loadCatalog();
-  prefillEmail();
-
-  $('#loginBtn').addEventListener('click', () => {
-    location.href = '/login.html';
-  });
-
-  $('#orderForm').addEventListener('submit', async (ev) => {
-    ev.preventDefault();
-    const form = ev.currentTarget;
-    const data = Object.fromEntries(new FormData(form).entries());
-
-    // basic validation already present by HTML, but double-check:
-    if (!data.name || !data.phone || !data.address || !data.dressId || !data.size || !data.quantity || !data.email) {
-      showMessage('Please fill all required fields', false);
-      return;
+  // --- Fetch catalog from server ---
+  async function fetchCatalog() {
+    try {
+      const resp = await fetch('/api/catalog');
+      const data = await resp.json();
+      renderCatalog(data);
+    } catch (err) {
+      console.error('Failed to fetch catalog:', err);
+      catalogContainer.innerHTML = '<p style="color:red">Failed to load catalog</p>';
     }
+  }
+
+  // --- Render catalog cards and dropdown ---
+  function renderCatalog(catalog) {
+    catalogContainer.innerHTML = '';
+    dressSelect.innerHTML = '';
+
+    catalog.forEach(item => {
+      // Card for display
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <img src="${item.img}" alt="${item.title}" />
+        <div class="title">${item.title}</div>
+        <div class="desc">${item.desc}</div>
+        <div class="price">₹ ${item.price.toLocaleString()}</div>
+        <div style="margin-top:5px;">
+          <button data-id="${item.id}" class="selectBtn">Select</button>
+        </div>
+      `;
+      catalogContainer.appendChild(card);
+
+      // Option for select dropdown
+      const opt = document.createElement('option');
+      opt.value = item.id;
+      opt.textContent = `${item.title} — ₹${item.price}`;
+      dressSelect.appendChild(opt);
+    });
+  }
+
+  // --- Handle "Select" button in catalog ---
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.selectBtn');
+    if (!btn) return;
+    dressSelect.value = btn.dataset.id;
+    dressSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+
+  // --- Submit order ---
+  orderForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(orderForm);
+    const data = Object.fromEntries(formData.entries());
+
+    // Add optional user email
+    if (userEmail) data.email = userEmail;
 
     try {
-      const res = await apiFetch('/api/orders', {
+      const resp = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
-      showMessage('Order placed! ID: ' + res.order.id, true);
-      // save email locally for convenience
-      localStorage.setItem('userEmail', data.email.toLowerCase());
-      prefillEmail();
-      form.reset();
+      const result = await resp.json();
+      if (!resp.ok) throw new Error(result.error || 'Order failed');
+
+      messageEl.style.color = 'green';
+      messageEl.textContent = `Order placed successfully! Order ID: ${result.order.id}`;
+      orderForm.reset();
     } catch (err) {
-      showMessage(err.message || 'Order failed', false);
+      messageEl.style.color = 'red';
+      messageEl.textContent = err.message;
+    }
+
+    setTimeout(() => { messageEl.textContent = ''; }, 5000);
+  });
+
+  // --- Fetch and display orders ---
+  async function fetchOrders() {
+    try {
+      let url = '/api/orders';
+      const headers = {};
+      if (isAdmin) headers['x-admin-token'] = adminToken;
+      else if (userEmail) url += `?email=${encodeURIComponent(userEmail)}`;
+
+      const resp = await fetch(url, { headers });
+      const orders = await resp.json();
+      if (!resp.ok) throw new Error(orders.error || 'Failed to load orders');
+      renderOrders(orders);
+    } catch (err) {
+      messageEl.style.color = 'red';
+      messageEl.textContent = err.message;
+    }
+  }
+
+  // --- Render orders ---
+  function renderOrders(orders) {
+    ordersList.innerHTML = '';
+    if (!orders.length) {
+      ordersList.innerHTML = '<em>No orders yet.</em>';
+      ordersSection.classList.remove('hidden');
+      return;
+    }
+
+    orders.slice().reverse().forEach(o => {
+      const div = document.createElement('div');
+      div.className = 'orderItem';
+      div.innerHTML = `
+        <div><strong>${o.name}</strong> — ${o.phone} — <small>${new Date(o.createdAt).toLocaleString()}</small></div>
+        <div>${o.dressId} | Size: ${o.size} | Qty: ${o.quantity} | Status: ${o.status}</div>
+        <div>Address: ${o.address}</div>
+        ${o.notes ? `<div>Notes: ${o.notes}</div>` : ''}
+        <div style="margin-top:4px;">
+          ${canCancel(o) ? `<button class="cancelBtn" data-id="${o.id}">Cancel</button>` : ''}
+          ${isAdmin ? `<button class="completeBtn" data-id="${o.id}">Mark Completed</button>` : ''}
+        </div>
+      `;
+      ordersList.appendChild(div);
+    });
+    ordersSection.classList.remove('hidden');
+  }
+
+  // --- Determine if user/admin can cancel order ---
+  function canCancel(order) {
+    if (isAdmin) return order.status !== 'cancelled';
+    return (userEmail && order.email === userEmail && order.status !== 'cancelled');
+  }
+
+  // --- Handle order buttons ---
+  document.addEventListener('click', async (e) => {
+    const cancelBtn = e.target.closest('.cancelBtn');
+    const completeBtn = e.target.closest('.completeBtn');
+
+    if (cancelBtn) {
+      const id = cancelBtn.dataset.id;
+      const body = {};
+      if (!isAdmin) body.email = userEmail;
+
+      try {
+        const resp = await fetch(`/api/orders/${id}/cancel`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken || '' },
+          body: JSON.stringify(body)
+        });
+        const result = await resp.json();
+        if (!resp.ok) throw new Error(result.error || 'Cancel failed');
+        fetchOrders();
+        messageEl.style.color = 'green';
+        messageEl.textContent = `Order ${id} cancelled successfully.`;
+      } catch (err) {
+        messageEl.style.color = 'red';
+        messageEl.textContent = err.message;
+      }
+      setTimeout(() => { messageEl.textContent = ''; }, 5000);
+    }
+
+    if (completeBtn && isAdmin) {
+      const id = completeBtn.dataset.id;
+      try {
+        const resp = await fetch(`/api/orders/${id}/status`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken },
+          body: JSON.stringify({ status: 'completed' })
+        });
+        const result = await resp.json();
+        if (!resp.ok) throw new Error(result.error || 'Status update failed');
+        fetchOrders();
+        messageEl.style.color = 'green';
+        messageEl.textContent = `Order ${id} marked as completed.`;
+      } catch (err) {
+        messageEl.style.color = 'red';
+        messageEl.textContent = err.message;
+      }
+      setTimeout(() => { messageEl.textContent = ''; }, 5000);
     }
   });
 
-  $('#myOrdersBtn').addEventListener('click', async () => {
-    await showMyOrders();
-  });
+  // --- View orders button ---
+  viewOrdersBtn?.addEventListener('click', fetchOrders);
+  closeOrdersBtn?.addEventListener('click', () => ordersSection.classList.add('hidden'));
 
-  $('#closeMyOrders').addEventListener('click', () => {
-    $('#myOrdersPanel').classList.add('hidden');
-  });
+  // Initial catalog load
+  fetchCatalog();
 });
-
-function showMessage(msg, ok=true) {
-  const el = $('#message');
-  el.style.color = ok ? 'green' : 'crimson';
-  el.textContent = msg;
-  setTimeout(()=>{ el.textContent = ''; }, 6000);
-}
-
-async function showMyOrders() {
-  const stored = localStorage.getItem('userEmail');
-  let email = stored;
-  if (!email) {
-    email = prompt('Enter the email you used for orders:');
-    if (!email) return alert('Email required to view orders');
-    localStorage.setItem('userEmail', email.toLowerCase());
-  }
-  try {
-    const orders = await apiFetch('/api/orders?email=' + encodeURIComponent(email));
-    const wrap = $('#myOrdersList');
-    wrap.innerHTML = '';
-    if (!orders.length) wrap.innerHTML = '<div>No orders found.</div>';
-    orders.slice().reverse().forEach(o => {
-      const div = document.createElement('div');
-      div.className = 'orderRow';
-      div.innerHTML = `
-        <div><strong>${o.name}</strong> — ${o.phone} — <small>${new Date(o.createdAt).toLocaleString()}</small></div>
-        <div class="meta">Item: ${o.dressId} | Size: ${o.size} | Qty: ${o.quantity} | Status: ${o.status}</div>
-        <div>${o.address}</div>
-      `;
-      if (o.notes) div.innerHTML += `<div>Notes: ${o.notes}</div>`;
-      if (o.status === 'received') {
-        const btn = document.createElement('button');
-        btn.textContent = 'Cancel Order';
-        btn.style.marginTop = '8px';
-        btn.addEventListener('click', async () => {
-          if (!confirm('Cancel this order?')) return;
-          try {
-            await apiFetch('/api/orders/' + o.id + '/cancel', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email })
-            });
-            showMessage('Order cancelled');
-            showMyOrders(); // refresh
-          } catch (err) {
-            showMessage(err.message, false);
-          }
-        });
-        div.appendChild(btn);
-      } else {
-        div.innerHTML += `<div class="meta">Updated: ${o.updatedAt || '—'}</div>`;
-      }
-      wrap.appendChild(div);
-    });
-    $('#myOrdersPanel').classList.remove('hidden');
-  } catch (err) {
-    showMessage(err.message || 'Failed to load orders', false);
-  }
-}
