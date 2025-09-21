@@ -1,88 +1,89 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login - Dress Shop</title>
-  <style>
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background: linear-gradient(120deg,#f093fb,#f5576c);
-      font-family: Arial, sans-serif;
-    }
-    .login-box {
-      background: white;
-      padding: 30px;
-      border-radius: 12px;
-      width: 320px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      text-align: center;
-    }
-    .login-box h2 { margin-bottom: 20px; }
-    .login-box input {
-      width: 100%;
-      padding: 10px;
-      margin: 8px 0;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 14px;
-    }
-    .login-box button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 12px;
-      border: none;
-      border-radius: 6px;
-      background: linear-gradient(to right, #ff512f, #dd2476);
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    .login-box button:hover { opacity: 0.9; }
-    #loginMessage { color: red; margin-top: 10px; font-size: 14px; }
-  </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Welcome — Dress Shop</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="login-box">
-    <h2>Welcome to Dress Shop</h2>
-    <form id="loginForm">
-      <input type="email" name="email" placeholder="Enter your email (optional)" />
-      <input type="password" name="password" placeholder="Admin password (optional)" />
-      <button type="submit">Enter Shop</button>
-    </form>
-    <p id="loginMessage"></p>
-  </div>
+  <main class="centered-card">
+    <h1>Welcome to ColorTwirl Dresses</h1>
+    <p class="lead">Enter your email to personalize orders (optional). Or continue as guest.</p>
+
+    <label class="row">
+      <input id="emailInput" type="email" placeholder="you@example.com" />
+    </label>
+
+    <div class="actions">
+      <button id="continueBtn">Continue</button>
+      <button id="guestBtn" class="muted">Continue as Guest</button>
+    </div>
+
+    <p style="margin-top:18px">
+      <a href="/admin.html">Shop Owner / Admin? Login here</a>
+    </p>
+  </main>
 
   <script>
-    document.getElementById('loginForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      const email = e.target.email.value.trim();
-      const password = e.target.password.value.trim();
-      const msgEl = document.getElementById('loginMessage');
-
-      // Clear previous message
-      msgEl.textContent = '';
-
-      // If admin password correct, mark admin
-      if (password === 'SRIDHAR_35') {
-        localStorage.setItem('isAdmin', 'true');
-      } else {
-        localStorage.removeItem('isAdmin');
-      }
-
-      // Save user email if entered
-      if (email) {
-        localStorage.setItem('userEmail', email);
-      } else {
-        localStorage.removeItem('userEmail');
-      }
-
-      // Redirect to catalog page
-      window.location.href = 'index.html';
+    document.getElementById('continueBtn').addEventListener('click', () => {
+      const val = document.getElementById('emailInput').value.trim();
+      if (val) localStorage.setItem('userEmail', val.toLowerCase());
+      else localStorage.removeItem('userEmail');
+      location.href = '/';
     });
+    document.getElementById('guestBtn').addEventListener('click', () => {
+      localStorage.removeItem('userEmail');
+      location.href = '/';
+    });
+
+    // prefill if userEmail exists
+    const stored = localStorage.getItem('userEmail');
+    if (stored) document.getElementById('emailInput').value = stored;
+  </script>
+</body>
+</html><!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Welcome — Dress Shop</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="centered-card">
+    <h1>Welcome to ColorTwirl Dresses</h1>
+    <p class="lead">Enter your email to personalize orders (optional). Or continue as guest.</p>
+
+    <label class="row">
+      <input id="emailInput" type="email" placeholder="you@example.com" />
+    </label>
+
+    <div class="actions">
+      <button id="continueBtn">Continue</button>
+      <button id="guestBtn" class="muted">Continue as Guest</button>
+    </div>
+
+    <p style="margin-top:18px">
+      <a href="/admin.html">Shop Owner / Admin? Login here</a>
+    </p>
+  </main>
+
+  <script>
+    document.getElementById('continueBtn').addEventListener('click', () => {
+      const val = document.getElementById('emailInput').value.trim();
+      if (val) localStorage.setItem('userEmail', val.toLowerCase());
+      else localStorage.removeItem('userEmail');
+      location.href = '/';
+    });
+    document.getElementById('guestBtn').addEventListener('click', () => {
+      localStorage.removeItem('userEmail');
+      location.href = '/';
+    });
+
+    // prefill if userEmail exists
+    const stored = localStorage.getItem('userEmail');
+    if (stored) document.getElementById('emailInput').value = stored;
   </script>
 </body>
 </html>
