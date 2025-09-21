@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Welcome — Dress Shop</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="centered-card">
+    <h1>Welcome to ColorTwirl Dresses</h1>
+    <p class="lead">Enter your email to personalize orders (optional). Or continue as guest.</p>
+
+    <label class="row">
+      <input id="emailInput" type="email" placeholder="you@example.com" />
+    </label>
+
+    <div class="actions">
+      <button id="continueBtn">Continue</button>
+      <button id="guestBtn" class="muted">Continue as Guest</button>
+    </div>
+
+    <p style="margin-top:18px">
+      <a href="/admin.html">Shop Owner / Admin? Login here</a>
+    </p>
+  </main>
+
+  <script>
+    document.getElementById('continueBtn').addEventListener('click', () => {
+      const val = document.getElementById('emailInput').value.trim();
+      if (val) localStorage.setItem('userEmail', val.toLowerCase());
+      else localStorage.removeItem('userEmail');
+      location.href = '/';
+    });
+    document.getElementById('guestBtn').addEventListener('click', () => {
+      localStorage.removeItem('userEmail');
+      location.href = '/';
+    });
+
+    // prefill if userEmail exists
+    const stored = localStorage.getItem('userEmail');
+    if (stored) document.getElementById('emailInput').value = stored;
+  </script>
+</body>
+</html><!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Welcome — Dress Shop</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="centered-card">
+    <h1>Welcome to ColorTwirl Dresses</h1>
+    <p class="lead">Enter your email to personalize orders (optional). Or continue as guest.</p>
+
+    <label class="row">
+      <input id="emailInput" type="email" placeholder="you@example.com" />
+    </label>
+
+    <div class="actions">
+      <button id="continueBtn">Continue</button>
+      <button id="guestBtn" class="muted">Continue as Guest</button>
+    </div>
+
+    <p style="margin-top:18px">
+      <a href="/admin.html">Shop Owner / Admin? Login here</a>
+    </p>
+  </main>
+
+  <script>
+    document.getElementById('continueBtn').addEventListener('click', () => {
+      const val = document.getElementById('emailInput').value.trim();
+      if (val) localStorage.setItem('userEmail', val.toLowerCase());
+      else localStorage.removeItem('userEmail');
+      location.href = '/';
+    });
+    document.getElementById('guestBtn').addEventListener('click', () => {
+      localStorage.removeItem('userEmail');
+      location.href = '/';
+    });
+
+    // prefill if userEmail exists
+    const stored = localStorage.getItem('userEmail');
+    if (stored) document.getElementById('emailInput').value = stored;
+  </script>
+</body>
+</html>

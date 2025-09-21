@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ColorTwirl Dresses — Shop</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <h1>ColorTwirl</h1>
+      <small>Bright dresses, happy days ✨</small>
+    </div>
+    <nav>
+      <span id="welcomeInfo"></span>
+      <button id="loginBtn" class="ghost">Login</button>
+      <a href="/admin.html"><button class="ghost">Admin</button></a>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <section class="catalog">
+      <h2>New Arrivals</h2>
+      <div id="items" class="grid"></div>
+    </section>
+
+    <aside class="sidebar">
+      <div class="card">
+        <h3>Place an Order</h3>
+        <form id="orderForm">
+          <label>Name <input name="name" required /></label>
+          <label>Phone <input name="phone" required /></label>
+          <label>Email <input name="email" id="orderEmail" type="email" required /></label>
+          <label>Address <textarea name="address" rows="2" required></textarea></label>
+          <label>Dress <select name="dressId" id="dressSelect" required></select></label>
+          <label>Size <select name="size" required><option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option></select></label>
+          <label>Quantity <input name="quantity" type="number" min="1" value="1" required /></label>
+          <label>Notes <textarea name="notes" rows="2"></textarea></label>
+          <div class="actions">
+            <button type="submit">Place Order</button>
+            <button type="button" id="myOrdersBtn" class="muted">My Orders</button>
+          </div>
+        </form>
+        <div id="message"></div>
+      </div>
+      <div id="myOrdersPanel" class="card hidden">
+        <h3>My Orders</h3>
+        <div id="myOrdersList"></div>
+        <div class="actions">
+          <button id="closeMyOrders" class="muted">Close</button>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="footer">
+    <small>Demo shop • Orders for demo only</small>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
